@@ -2,9 +2,9 @@ package com.example.rotationproofdownloaderdemo;
 
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -14,12 +14,6 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +21,9 @@ public class MainActivity extends AppCompatActivity {
     Button btnDownload;
     ProgressBar progressBar;
     ImageView imageView;
+
+    RetainedFragment retainedFragment;
+    private String filePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,88 +39,53 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String url = etUrl.getText().toString();
-                String filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).
+                filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).
                         getAbsolutePath() + "/" + Uri.parse(url).getLastPathSegment();
                 if (!TextUtils.isEmpty(url)) {
-                    new DownloadTask(filePath).execute(url);
+                    retainedFragment.startDownload(url, filePath);
                 }
             }
         });
+
+        if (savedInstanceState == null) {
+            //Creates the fragment if activity is newly created.
+            retainedFragment = new RetainedFragment();
+            getSupportFragmentManager().beginTransaction().add(retainedFragment, "RetainedFragment").commit();
+        } else {
+            //Get the fragment if activity is recreated after a confg change.
+            retainedFragment = (RetainedFragment) getSupportFragmentManager().findFragmentByTag("RetainedFragment");
+            if (retainedFragment.downloadTask.getStatus() == AsyncTask.Status.RUNNING)
+                showProgress(true); //bcoz initial visibility of progress is GONE
+        }
+
     }
 
-    class DownloadTask extends AsyncTask<String, Integer, Boolean> {
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("filePath", filePath);
+        super.onSaveInstanceState(outState);
+    }
 
-        private int totalContentLength = -1;
-        private int totalContentRead = -1;
-        private String filePath;
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        filePath = savedInstanceState.getString("filePath");
+    }
 
-        public DownloadTask(String filePath) {
-            this.filePath = filePath;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
+    public void showProgress(boolean show) {
+        if (show) {
             progressBar.setVisibility(View.VISIBLE);
-            progressBar.setProgress(0);
+        } else {
+            progressBar.setVisibility(View.GONE);
         }
+    }
 
-        @Override
-        protected Boolean doInBackground(String... params) {
-            String downloadUrl = params[0];
-            boolean success = false;
-            URL url;
-            HttpURLConnection httpURLConnection = null;
-            InputStream inputStream = null;
-            FileOutputStream fileOutputStream = null;
-            File file;
-            try {
-                url = new URL(downloadUrl);
-                httpURLConnection = (HttpURLConnection) url.openConnection();
-                totalContentLength = httpURLConnection.getContentLength();
-                System.out.println("totalContentLength = " + totalContentLength);
-                inputStream = httpURLConnection.getInputStream();
-                file = new File(filePath);
-                fileOutputStream = new FileOutputStream(file);
-                byte[] buffer = new byte[512];
-                int read = -1;
-                while ((read = inputStream.read(buffer)) != -1) {
-                    System.out.println("DownloadTask.doInBackground Read " + read);
-                    fileOutputStream.write(buffer, 0, read);
-                    totalContentRead += read;
-                    int percentageRead = (int) (((double)totalContentRead / totalContentLength) * 100);
-                    System.out.println("percentageRead = " + percentageRead);
-                    publishProgress(percentageRead);
-                }
-                success = true;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }finally {
-                try {
-                    if(httpURLConnection != null) httpURLConnection.disconnect();
-                    if(inputStream != null) inputStream.close();
-                    if(fileOutputStream != null) fileOutputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+    public void updateProgressbar(int progress) {
+        progressBar.setProgress(progress);
+    }
 
-                return success;
-            }
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            progressBar.setProgress(values[0]);
-        }
-
-        @Override
-        protected void onPostExecute(Boolean success) {
-            super.onPostExecute(success);
-            System.out.println("success = " + success);
-            progressBar.setVisibility(View.INVISIBLE);
-            if(success) imageView.setImageURI(Uri.fromFile(new File(filePath)));
-            else Toast.makeText(MainActivity.this, "Download Failed", Toast.LENGTH_SHORT).show();
-        }
+    public void onDownloadFinished(boolean success) {
+        if (success) imageView.setImageURI(Uri.fromFile(new File(filePath)));
+        else Toast.makeText(MainActivity.this, "Download Failed", Toast.LENGTH_SHORT).show();
     }
 }

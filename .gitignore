@@ -1,3 +1,57 @@
+
+Skip to content
+This repository
+
+    Pull requests
+    Issues
+    Marketplace
+    Gist
+
+    @rahulraj64
+
+2,147
+53,228
+
+    23,058
+
+github/gitignore
+Code
+Pull requests 162
+Projects 0
+gitignore/Android.gitignore
+82eeac2 on 17 Feb
+Aleixo Sánchez Ignore dictionaries to reflect docs
+@arcresu
+@tral
+@friederbluemle
+@callingshotgun
+@AdrianVovk
+@Zarkopafilis
+@whoshuu
+@evorion
+@szpssky
+@SamWhited
+@exarus
+@mquigley
+@kevinmost
+@vitorprado
+@jshou
+@HIPERCUBE
+@jschmid
+@PR3x
+@izuzak
+@FionaHagen
+@linterpreteur
+@erikghonyan
+@baudm
+@mrtazz
+@shiftkey
+@gbaron
+56 lines (41 sloc) 760 Bytes
+# Built application files
+*.apk
+*.ap_
+
 # Files for the ART/Dalvik VM
 *.dex
 
@@ -35,6 +89,7 @@ captures/
 .idea/gradle.xml
 .idea/dictionaries
 .idea/libraries
+.idea/vcs.xml
 
 # Keystore files
 *.jks
@@ -45,7 +100,5 @@ captures/
 # Google Services (e.g. APIs or Firebase)
 google-services.json
 
-# Freeline
-freeline.py
-freeline/
-freeline_project_description.json
+
+
